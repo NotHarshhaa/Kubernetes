@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+        - name: influxdb
+          image: influxdb
+          ports:
+            - containerPort: 8086
+          volumeMounts:
+            - mountPath: /var/lib/influxdb2
+              name: influxdb
+          env:
+            - name: DOCKER_INFLUXDB_INIT_MODE
+              value: setup
+            - name: DOCKER_INFLUXDB_INIT_USERNAME
+              value: admin
+            - name: DOCKER_INFLUXDB_INIT_PASSWORD
+              value: mypassword
+            - name: DOCKER_INFLUXDB_INIT_ORG
+              value: my_org
+            - name: DOCKER_INFLUXDB_INIT_BUCKET
+              value: my_bucket
+      volumes:
+        - name: influxdb
+          persistentVolumeClaim:
+            claimName: influxdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+spec:
+  ports:
+    - port: 8086
+      nodePort: 30886
+  selector:
+    app: influxdb
+  type: NodePort
