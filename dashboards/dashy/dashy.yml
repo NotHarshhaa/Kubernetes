@@ -1,0 +1,70 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dashy
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashy
+  template:
+    metadata:
+      labels:
+        app: dashy
+    spec:
+      containers:
+      - name: dashy
+        image: lissy93/dashy:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /app/public/
+          name: dashy
+      volumes:
+      - name: dashy
+        persistentVolumeClaim:
+          claimName: dashy
+---
+# A Single-use pod to create the content of /app/public in the PV
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dashy-seeder
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: dashy-seeder
+    image: lissy93/dashy:latest
+    command: ["cp"]
+    args: ["-r", "/app/public/", "/mnt/"]
+    volumeMounts:
+    - mountPath: /mnt/public
+      name: dashy-seeder
+  volumes:
+  - name: dashy-seeder
+    persistentVolumeClaim:
+      claimName: dashy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashy
+spec:
+  ports:
+  - port: 80
+    nodePort: 30004
+  selector:
+    app: dashy
+  type: NodePort

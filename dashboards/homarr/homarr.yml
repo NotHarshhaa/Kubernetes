@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homarr-configs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homarr-icons
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homarr-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homarr
+  template:
+    metadata:
+      labels:
+        app: homarr
+    spec:
+      containers:
+        - name: homarr
+          image: ghcr.io/ajnart/homarr:0.14.4
+          ports:
+            - containerPort: 7575
+          env:
+            - name: PASSWORD
+              value: mypassword
+          volumeMounts:
+            - mountPath: /data
+              name: homarr-data
+            - mountPath: /app/data/configs
+              name: homarr-configs
+            - mountPath: /app/public/icons
+              name: homarr-icons
+      volumes:
+        - name: homarr-configs
+          persistentVolumeClaim:
+            claimName: homarr-configs
+        - name: homarr-icons
+          persistentVolumeClaim:
+            claimName: homarr-icons
+        - name: homarr-data
+          persistentVolumeClaim:
+            claimName: homarr-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homarr
+spec:
+  ports:
+    - port: 7575
+      nodePort: 30008
+  selector:
+    app: homarr
+  type: NodePort

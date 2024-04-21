@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: heimdall
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heimdall
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: heimdall
+  template:
+    metadata:
+      labels:
+        app: heimdall
+    spec:
+      volumes:
+        - name: heimdall
+          persistentVolumeClaim:
+            claimName: heimdall
+      containers:
+        - name: heimdall
+          image: lscr.io/linuxserver/heimdall:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: TZ
+              value: Asia/Tokyo
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+          volumeMounts:
+            - mountPath: /config
+              name: heimdall
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heimdall
+spec:
+  ports:
+    - port: 80
+      nodePort: 30002
+  selector:
+    app: heimdall
+  type: NodePort
