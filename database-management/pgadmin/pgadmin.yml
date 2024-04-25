@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pgadmin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+        - env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: admin@example.com
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: keyboardcat
+            - name: PGADMIN_PORT
+              value: "80"
+          image: dpage/pgadmin4
+          name: pgadmin
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /var/lib/pgadmin
+              name: pgadmin
+      volumes:
+        - name: pgadmin
+          persistentVolumeClaim:
+            claimName: pgadmin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pgadmin
+  name: pgadmin
+spec:
+  ports:
+    - nodePort: 30165
+      port: 80
+  selector:
+    app: pgadmin
+  type: NodePort

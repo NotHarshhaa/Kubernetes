@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloudbeaver
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudbeaver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudbeaver
+  template:
+    metadata:
+      labels:
+        app: cloudbeaver
+    spec:
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: cloudbeaver
+      containers:
+        - name: cloudbeaver
+          image: dbeaver/cloudbeaver:23.2.5
+          ports:
+            - containerPort: 8978
+          volumeMounts:
+            - mountPath: /opt/cloudbeaver/workspace
+              name: workspace
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudbeaver
+spec:
+  ports:
+    - port: 8978
+      nodePort: 30433
+  selector:
+    app: cloudbeaver
+  type: NodePort
