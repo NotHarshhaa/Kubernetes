@@ -2,6 +2,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mongo
+  namespace: databases # Added namespace
+  labels:
+    app: mongo
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,6 +16,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongo
+  namespace: databases # Added namespace
+  labels:
+    app: mongo
 spec:
   replicas: 1
   selector:
@@ -35,14 +41,41 @@ spec:
         volumeMounts:
         - mountPath: /data/db
           name: mongo
+        resources: # Added resource limits and requests
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe: # Added liveness probe
+          exec:
+            command:
+            - mongo
+            - --eval
+            - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe: # Added readiness probe
+          exec:
+            command:
+            - mongo
+            - --eval
+            - "db.adminCommand('ping')"
+          initialDelaySeconds: 5
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo
+  namespace: databases # Added namespace
+  labels:
+    app: mongo
 spec:
   ports:
   - port: 27017
+    targetPort: 27017
     nodePort: 30217
   selector:
     app: mongo
