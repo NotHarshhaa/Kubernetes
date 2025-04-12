@@ -1,5 +1,9 @@
 name: KubeCheck 🔍
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   push:
     paths:
@@ -131,7 +135,7 @@ jobs:
       - name: Comment on commit
         working-directory: ${{ github.workspace }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
           SHA: ${{ needs.fetch_commit_info.outputs.sha }}
           COMMIT_MSG: ${{ needs.fetch_commit_info.outputs.message }}
           COMMIT_TIME: ${{ needs.fetch_commit_info.outputs.timestamp }}
