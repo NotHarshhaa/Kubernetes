@@ -60,7 +60,7 @@ jobs:
           RESULTS=""
           PASS_COUNT=0
           FAIL_COUNT=0
-          for file in $(cat changed_yamls.txt); do
+          while IFS= read -r file; do
             output=$(kubeconform -strict -verbose "$file" 2>&1)
             if echo "$output" | grep -q "PASS"; then
               emoji="✅"
@@ -70,7 +70,7 @@ jobs:
               FAIL_COUNT=$((FAIL_COUNT + 1))
             fi
             RESULTS="${RESULTS}${emoji} \`${file}\`\n${output}\n\n"
-          done
+          done < changed_yamls.txt
 
           SUMMARY="✅ Passed: ${PASS_COUNT} | ❌ Failed: ${FAIL_COUNT}"
           echo "$RESULTS" > validation_output.txt
@@ -81,12 +81,21 @@ jobs:
 
           echo "summary=${SUMMARY}" >> $GITHUB_OUTPUT
 
+          echo -e "$RESULTS"
+
       - name: Set summary for skipped validation
         if: steps.detect_changes.outputs.changed == 'false'
         id: kubeval_skip
         run: |
           echo "summary=✅ No Kubernetes YAML files changed. Skipped validation." >> $GITHUB_OUTPUT
           echo "results=" >> $GITHUB_OUTPUT
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-results
+          path: validation_output.txt
 
       - name: Fail if any errors
         if: steps.detect_changes.outputs.changed == 'true'
@@ -101,7 +110,11 @@ jobs:
     needs: [fetch_commit_info, validate_kubeconform]
     if: always()
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Comment on commit
+        working-directory: ${{ github.workspace }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SHA: ${{ needs.fetch_commit_info.outputs.sha }}
