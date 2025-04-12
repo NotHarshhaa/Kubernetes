@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: logdaemonset
+  namespace: logging # Specify the namespace
   labels:
     app: fluentd-logging
 spec:
@@ -14,9 +15,8 @@ spec:
         name: fluentd-elasticsearch
     spec:
       tolerations:
-      # this toleration is to have the daemonset runnable on master nodes
-      # remove it if your masters can't run pods
-      - key: node-role.kubernetes.io/master
+      # Allow the DaemonSet to run on control-plane nodes
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
       containers:
       - name: fluentd-elasticsearch
@@ -33,6 +33,22 @@ spec:
         - name: varlibdockercontainers
           mountPath: /var/lib/docker/containers
           readOnly: true
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlog
