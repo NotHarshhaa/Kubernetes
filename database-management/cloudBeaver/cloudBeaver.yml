@@ -2,6 +2,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: cloudbeaver
+  namespace: database-management
+  labels:
+    app: cloudbeaver
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,6 +16,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudbeaver
+  namespace: database-management
+  labels:
+    app: cloudbeaver
 spec:
   replicas: 1
   selector:
@@ -35,16 +41,38 @@ spec:
           volumeMounts:
             - mountPath: /opt/cloudbeaver/workspace
               name: workspace
-
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8978
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8978
+            initialDelaySeconds: 15
+            periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: cloudbeaver
+  namespace: database-management
+  labels:
+    app: cloudbeaver
 spec:
   ports:
     - port: 8978
-      nodePort: 30433
+      targetPort: 8978
+      nodePort: 30433 # Use only if NodePort is required
   selector:
     app: cloudbeaver
-  type: NodePort
+  type: NodePort # Change to ClusterIP if external access is not needed
