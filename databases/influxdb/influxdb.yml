@@ -2,17 +2,20 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: influxdb
+  namespace: databases
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
+  storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: influxdb
+  namespace: databases
 spec:
   replicas: 1
   selector:
@@ -25,7 +28,7 @@ spec:
     spec:
       containers:
         - name: influxdb
-          image: influxdb
+          image: influxdb:2.7.1
           ports:
             - containerPort: 8086
           volumeMounts:
@@ -42,6 +45,25 @@ spec:
               value: my_org
             - name: DOCKER_INFLUXDB_INIT_BUCKET
               value: my_bucket
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8086
+            initialDelaySeconds: 10
+            periodSeconds: 20
       volumes:
         - name: influxdb
           persistentVolumeClaim:
@@ -51,10 +73,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: influxdb
+  namespace: databases
 spec:
   ports:
     - port: 8086
-      nodePort: 30886
+      targetPort: 8086
   selector:
     app: influxdb
-  type: NodePort
+  type: ClusterIP
