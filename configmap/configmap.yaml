@@ -7,7 +7,7 @@ data:
   database: "mydatabase"
   site.settings: |
     color=blue
-    padding:25px
+    padding: 25px
 ---
 apiVersion: v1
 kind: Pod
@@ -15,24 +15,36 @@ metadata:
   name: configmappod
 spec:
   containers:
-  - name: configmapcontainer
-    image: nginx
-    env:
-      - name: DB_SERVER
-        valueFrom:
-          configMapKeyRef:
-            name: myconfigmap
-            key: db_server
-      - name: DATABASE
-        valueFrom:
-          configMapKeyRef:
-            name: myconfigmap
-            key: database
-    volumeMounts:
-      - name: config-vol
-        mountPath: "/config"
-        readOnly: true
+    - name: configmapcontainer
+      image: nginx
+      env:
+        - name: DB_SERVER
+          valueFrom:
+            configMapKeyRef:
+              name: myconfigmap
+              key: db_server
+        - name: DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: myconfigmap
+              key: database
+      volumeMounts:
+        - name: config-vol
+          mountPath: "/config"
+          readOnly: true
   volumes:
     - name: config-vol
       configMap:
         name: myconfigmap
+        items:
+          - key: site.settings
+            path: "site.settings"  # Mount only the relevant file from the ConfigMap
+  restartPolicy: Always
+  dnsPolicy: ClusterFirst
+  securityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+  terminationGracePeriodSeconds: 30
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
