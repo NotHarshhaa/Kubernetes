@@ -1,19 +1,27 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  #creationTimestamp: null
-  labels:
-    run: alpine-2-containers
   name: alpine-2-containers
+  labels:
+    app: alpine-2-containers
 spec:
   containers:
-  - args:
-    - /bin/sh
-    - -c
-    - echo hello;sleep 3600
-    image: alpine
-    name: alpine-2-containers
-    #resources: {}
+    - name: alpine
+      image: alpine:latest
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "[alpine] Hello from container";
+          sleep 3600;
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "100m"
+        limits:
+          memory: "64Mi"
+          cpu: "250m"
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
   dnsPolicy: ClusterFirst
   restartPolicy: Never
-#status: {}

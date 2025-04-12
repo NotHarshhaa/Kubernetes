@@ -1,32 +1,41 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  labels:
-    run: alpine-2-containers
   name: alpine-2-containers-share-volume
+  labels:
+    app: alpine-volume-demo
 spec:
   containers:
-  - args:
-    - /bin/sh
-    - -c
-    - echo hello;sleep 10000
-    image: alpine
-    name: alpine1
-    volumeMounts:
-      - name: share
-        mountPath: "/tmp/share1"
-  - args:
-    - /bin/sh
-    - -c
-    - echo hello;sleep 10000
-    image: alpine
-    name: alpine2
-    volumeMounts:
-      - name: share
-        mountPath: "/tmp/share2"
+    - name: writer
+      image: alpine
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "[Writer] Writing to shared volume...";
+          echo "Shared data from writer" > /shared/message.txt;
+          echo "[Writer] Sleeping...";
+          sleep 10000;
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared
+
+    - name: reader
+      image: alpine
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "[Reader] Waiting for message...";
+          sleep 5;
+          cat /shared/message.txt || echo "No message found!";
+          echo "[Reader] Sleeping...";
+          sleep 10000;
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /shared
+
+  volumes:
+    - name: shared-volume
+      emptyDir: {}
+
   dnsPolicy: ClusterFirst
   restartPolicy: Never
-  volumes:
-    - name: share
-      emptyDir: {}
-#status: {}
