@@ -2,6 +2,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: homarr-configs
+  namespace: homarr
+  labels:
+    app: homarr
 spec:
   accessModes:
     - ReadWriteMany
@@ -13,6 +16,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: homarr-icons
+  namespace: homarr
+  labels:
+    app: homarr
 spec:
   accessModes:
     - ReadWriteMany
@@ -24,6 +30,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: homarr-data
+  namespace: homarr
+  labels:
+    app: homarr
 spec:
   accessModes:
     - ReadWriteOnce
@@ -35,6 +44,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: homarr
+  namespace: homarr
+  labels:
+    app: homarr
 spec:
   replicas: 1
   selector:
@@ -50,9 +62,16 @@ spec:
           image: ghcr.io/ajnart/homarr:0.14.4
           ports:
             - containerPort: 7575
-          env:
-            - name: PASSWORD
-              value: mypassword
+          envFrom:
+            - secretRef:
+                name: homarr-secret
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           volumeMounts:
             - mountPath: /data
               name: homarr-data
@@ -60,6 +79,18 @@ spec:
               name: homarr-configs
             - mountPath: /app/public/icons
               name: homarr-icons
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7575
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7575
+            initialDelaySeconds: 10
+            periodSeconds: 20
       volumes:
         - name: homarr-configs
           persistentVolumeClaim:
@@ -75,10 +106,22 @@ apiVersion: v1
 kind: Service
 metadata:
   name: homarr
+  namespace: homarr
+  labels:
+    app: homarr
 spec:
   ports:
     - port: 7575
-      nodePort: 30008
+      targetPort: 7575
   selector:
     app: homarr
-  type: NodePort
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: homarr-secret
+  namespace: homarr
+type: Opaque
+data:
+  PASSWORD: bXlwYXNzd29yZA== # Base64 encoded value of "mypassword"
