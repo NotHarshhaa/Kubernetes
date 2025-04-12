@@ -2,11 +2,25 @@
 
 set -e
 
+# Fallback defaults (optional safety)
+COMMIT_TIME="${COMMIT_TIME:-Unknown}"
+COMMIT_MSG="${COMMIT_MSG:-(no message)}"
+SUMMARY="${SUMMARY:-No summary provided.}"
+RESULTS="${RESULTS:-}"
+
+# Format commit message to escape backticks or special chars
+ESCAPED_MSG=$(echo "$COMMIT_MSG" | sed 's/`/\\`/g')
+
+# If no validation results, say so
+if [[ -z "$RESULTS" ]]; then
+  RESULTS="_No files were validated in this run._"
+fi
+
 COMMENT="$(cat <<EOF
 🧪 **KubeCheck Validation Results**
 
 🕒 Commit Time: \`${COMMIT_TIME}\`  
-💬 Message: _${COMMIT_MSG}_
+💬 Message: _${ESCAPED_MSG}_
 
 ${SUMMARY}
 
