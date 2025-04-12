@@ -39,17 +39,31 @@ jobs:
           curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
           sudo mv kubeconform /usr/local/bin/
 
-      - name: Detect changed YAML files
+      - name: Detect changed Kubernetes YAML files
         id: detect_changes
         run: |
           git fetch origin ${{ github.event.before }}
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '\.ya?ml$' || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No Kubernetes YAML changes found. Skipping validation."
+
+          echo "Detected YAML files:"
+          echo "$CHANGED_FILES"
+
+          # Filter for real Kubernetes manifests (contains kind + apiVersion)
+          VALID_KUBE_FILES=""
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" ]] && grep -q '^\s*apiVersion:' "$file" && grep -q '^\s*kind:' "$file"; then
+              VALID_KUBE_FILES+="$file"$'\n'
+            fi
+          done
+
+          if [[ -z "$VALID_KUBE_FILES" ]]; then
+            echo "No valid Kubernetes manifests found. Skipping validation."
             echo "changed=false" >> $GITHUB_OUTPUT
           else
-            echo "$CHANGED_FILES" > changed_yamls.txt
+            echo "$VALID_KUBE_FILES" > changed_yamls.txt
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Files to validate:"
+            cat changed_yamls.txt
           fi
 
       - name: Validate Kubernetes YAML
@@ -60,6 +74,7 @@ jobs:
           RESULTS=""
           PASS_COUNT=0
           FAIL_COUNT=0
+
           while IFS= read -r file; do
             output=$(kubeconform -strict -verbose "$file" 2>&1)
             if echo "$output" | grep -q "PASS"; then
@@ -80,14 +95,14 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "summary=${SUMMARY}" >> $GITHUB_OUTPUT
-
+          echo -e "$SUMMARY"
           echo -e "$RESULTS"
 
       - name: Set summary for skipped validation
         if: steps.detect_changes.outputs.changed == 'false'
         id: kubeval_skip
         run: |
-          echo "summary=✅ No Kubernetes YAML files changed. Skipped validation." >> $GITHUB_OUTPUT
+          echo "summary=✅ No valid Kubernetes YAML files changed. Skipped validation." >> $GITHUB_OUTPUT
           echo "results=" >> $GITHUB_OUTPUT
 
       - name: Upload validation results
