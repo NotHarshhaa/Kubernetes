@@ -1,4 +1,4 @@
-# Contributing to 𝘼𝙡𝙡 𝙞𝙣 𝙊𝙣𝙚 𝙗𝙪𝙙𝙙𝙡𝙚 𝙤𝙛 𝙆𝙪𝙗𝙚𝙧𝙣𝙚𝙩𝙚𝙨
+# Contributing to 𝘼𝙡𝙡 𝙞𝙣 𝙊𝙣𝙚 𝙗𝙪𝙣𝙙𝙡𝙚 𝙤𝙛 𝙆𝙪𝙗𝙚𝙧𝙣𝙚𝙩𝙚𝙨
 
 > [!IMPORTANT]
 >

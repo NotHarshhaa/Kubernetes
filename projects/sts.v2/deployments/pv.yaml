@@ -11,12 +11,12 @@ spec:
     requests:
       storage: 20Gi
 ---
-# Persistent Volume
+# StorageClass
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: sts-aws-gp2
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com # For legacy k8s < 1.27: kubernetes.io/aws-ebs
 parameters:
   type: gp2
   zones: us-east-1a

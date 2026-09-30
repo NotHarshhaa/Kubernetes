@@ -51,17 +51,17 @@ spec:
         livenessProbe: # Added liveness probe
           exec:
             command:
-            - mongo
-            - --eval
-            - "db.adminCommand('ping')"
+            - /bin/sh
+            - -c
+            - "mongosh --eval \"db.adminCommand('ping')\" || mongo --eval \"db.adminCommand('ping')\""
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe: # Added readiness probe
           exec:
             command:
-            - mongo
-            - --eval
-            - "db.adminCommand('ping')"
+            - /bin/sh
+            - -c
+            - "mongosh --eval \"db.adminCommand('ping')\" || mongo --eval \"db.adminCommand('ping')\""
           initialDelaySeconds: 5
           periodSeconds: 10
 ---

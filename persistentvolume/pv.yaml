@@ -9,7 +9,7 @@ spec:
     storage: 5Gi
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Recycle
+  persistentVolumeReclaimPolicy: Retain # Recycle is deprecated in modern Kubernetes
   nfs:
     path: /
     server: 10.255.255.10

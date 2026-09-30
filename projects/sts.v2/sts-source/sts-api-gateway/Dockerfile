@@ -1,6 +1,6 @@
 FROM openjdk:8u131-jdk-alpine
 
-MAINTAINER PR Reddy "trainings@edwiki.in"
+LABEL maintainer="PR Reddy <trainings@edwiki.in>"
 
 EXPOSE 8080
 

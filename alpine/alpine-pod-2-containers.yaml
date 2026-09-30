@@ -22,6 +22,7 @@ spec:
           memory: "128Mi"
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
         allowPrivilegeEscalation: false
 
     - name: alpine2
@@ -40,6 +41,7 @@ spec:
           memory: "128Mi"
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
         allowPrivilegeEscalation: false
 
   dnsPolicy: ClusterFirst

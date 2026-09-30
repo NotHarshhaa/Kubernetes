@@ -6,7 +6,7 @@
     labels:
       name: deploy
   spec:
-    serviceAccount: jenkins-agent-sa
+    serviceAccountName: jenkins-agent-sa
     containers:
     - name: deploy
       image: dpthub/eddeployagent

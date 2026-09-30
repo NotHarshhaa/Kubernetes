@@ -28,6 +28,8 @@ spec:
             configMapKeyRef:
               name: myconfigmap
               key: database
+      securityContext:
+        allowPrivilegeEscalation: false
       volumeMounts:
         - name: config-vol
           mountPath: "/config"
@@ -41,9 +43,6 @@ spec:
             path: "site.settings"  # Mount only the relevant file from the ConfigMap
   restartPolicy: Always
   dnsPolicy: ClusterFirst
-  securityContext:
-    runAsNonRoot: true
-    allowPrivilegeEscalation: false
   terminationGracePeriodSeconds: 30
   hostNetwork: false
   hostIPC: false

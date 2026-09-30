@@ -103,7 +103,7 @@
 ### 📌 **✅ Kubernetes Security Best Practices**  
 
 - Secure **container images** & Kubernetes secrets 🔐  
-- Implement **RBAC, Pod Security Policies, and Network Policies**  
+- Implement **RBAC, Pod Security Standards (PSS/PSA), and Network Policies**  
 
 ### 📌 **🚀 Kubernetes Performance Tuning**  
 
